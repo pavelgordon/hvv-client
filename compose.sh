@@ -8,4 +8,4 @@ docker run --name hvv-client --rm -d \
 --env "VIRTUAL_HOST=pgordon.dev" \
 --env "LETSENCRYPT_HOST=pgordon.dev" \
 --env "LETSENCRYPT_EMAIL=pgordon.dev" \
-registry.gitlab.com/pavelgordon/hvvclient
+registry.gitlab.com/pavelgordon/hvv-client
