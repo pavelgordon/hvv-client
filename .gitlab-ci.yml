@@ -30,9 +30,9 @@ docker-build:
   image: docker:latest
   stage: package
   script:
-  - docker build -t registry.gitlab.com/pavelgordon/hvv-client .
+  - docker build -t registry.gitlab.com/pavelgordon/hvvclient .
   - docker login -u pavelgordon -p $DOCKER_TOKEN registry.gitlab.com
-  - docker push registry.gitlab.com/pavelgordon/hvv-client
+  - docker push registry.gitlab.com/pavelgordon/hvvclient
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull
