@@ -1,5 +1,5 @@
 #!/usr/bin/sh
-echo toke=$DOCKER_TOKEN
+echo token=$DOCKER_TOKEN
 docker login registry.gitlab.com -u pavelgordon -p $DOCKER_TOKEN
 docker pull registry.gitlab.com/pavelgordon/hvv-client
 docker stop hvv-client || true
