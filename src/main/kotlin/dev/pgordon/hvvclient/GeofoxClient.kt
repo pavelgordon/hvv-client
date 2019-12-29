@@ -87,7 +87,7 @@ class GeofoxClient : CommandLineRunner {
         @Language("JSON") val data = """
             |{
             |"station": $station,
-            |"date": "heute", "time": "jetzt",
+            |"time": {"date": "heute", "time": "jetzt"},
             |"maxList": 30,
             |"maxTimeOffset": 1000,
             |"useRealtime": true
