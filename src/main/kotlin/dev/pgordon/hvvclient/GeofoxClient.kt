@@ -82,11 +82,12 @@ class GeofoxClient : CommandLineRunner {
         val (date, time) = now().format(
             ofPattern("dd.MM.YYY HH:mm")).toString().split(" ", limit = 2)
 
+        ////            |"time": {"date": "$date", "time": "$time"},
         //"date": "heute", "time": "jetzt"
         @Language("JSON") val data = """
             |{
             |"station": $station,
-            |"time": {"date": "$date", "time": "$time"},
+            |"date": "heute", "time": "jetzt",
             |"maxList": 30,
             |"maxTimeOffset": 1000,
             |"useRealtime": true
@@ -97,9 +98,15 @@ class GeofoxClient : CommandLineRunner {
             data = data
         )
 
-//        println(post.jsonObject.toString(2))
+        if(!post.jsonObject.has("departures")){
+            println("Couldn't get departures:")
+            println("Request " + data)
+            println("Response " + post.statusCode + " " + post.text)
+        }
+        val departures = post.jsonObject.getJSONArray("departures")
 
-        val list = post.jsonObject.getJSONArray("departures").map { it as JSONObject }
+        val list = departures
+            .map { it as JSONObject }
             .filter {
                 filter.toLowerCase() in it.getJSONObject("line").getString("name").toLowerCase()
                     ||
