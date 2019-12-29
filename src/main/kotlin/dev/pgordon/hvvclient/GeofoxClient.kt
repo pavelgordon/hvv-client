@@ -15,40 +15,9 @@ import javax.crypto.spec.SecretKeySpec
 import javax.xml.bind.DatatypeConverter
 
 @Component
-class GeofoxClient : CommandLineRunner {
+class GeofoxClient {
     val gson: Gson = GsonBuilder().setPrettyPrinting().create()
-    override fun run(vararg args: String?) {
 
-        while (true) {
-            println("""
-                Following commands are supported
-                - find station_name                     | aliases  = 1, f, find
-                - schedule station_name service_name    | aliases  = 2, s, schedule
-                - help
-                Examples:
-                - schedule altona 111
-                - schedule iserbrook s1
-                - schedule iserbrook flughafen
-                - s iserbrook flughafen
-            """.trimIndent())
-            print("Enter Command: ")
-
-            readLine()?.let {
-                try {
-                    val command = it.substringBefore(" ", "no_command")
-                    val argument = it.substringAfter(" ", "no_argument")
-                    when (command) {
-                        "1", "f", "find" -> findStation(argument)
-                        "2", "s", "schedule" -> getDepartures(argument)
-                        else -> println("no such command")
-                    }
-                } catch (e: Exception) {
-                    println("error during parsing: $it")
-                }
-            }
-
-        }
-    }
 
     fun findStation(name: String): JSONObject {
         val data = """{
