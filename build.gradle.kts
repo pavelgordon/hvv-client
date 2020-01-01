@@ -34,6 +34,8 @@ dependencies {
     implementation("javax.xml.bind:jaxb-api:2.3.0")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("com.google.code.gson:gson:2.8.6")
+    implementation("io.github.microutils:kotlin-logging:1.6.26")
+    implementation("ch.qos.logback:logback-classic:1.2.3")
 
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
