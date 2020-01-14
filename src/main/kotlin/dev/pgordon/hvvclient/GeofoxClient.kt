@@ -5,7 +5,6 @@ import com.google.gson.GsonBuilder
 import khttp.post
 import org.intellij.lang.annotations.Language
 import org.json.JSONObject
-import org.springframework.boot.CommandLineRunner
 import org.springframework.stereotype.Component
 import java.nio.charset.Charset
 import java.time.LocalDateTime.now
@@ -41,15 +40,62 @@ class GeofoxClient {
     }
 
     fun getDepartures(stationName: String, filter: String): List<Departure> {
+
+        val departures = getDeparturesFromHVV(stationName).getJSONArray("departures")
+
+        val list = departures
+            .map { it as JSONObject }
+            .filter {
+                filter.toLowerCase() in it.getJSONObject("line").getString("name").toLowerCase()
+                    || filter.toLowerCase() in it.getJSONObject("line").getString("direction").toLowerCase()
+            }
+            .map {
+                (it.getJSONObject("line").getString("name") + " " +
+                    it.getJSONObject("line").getString("direction")) to
+                    it.getInt("timeOffset")
+            }
+            .map { Departure(it.first, it.second) }
+
+        println(list)
+
+        return list;
+    }
+
+    fun getDeparturesFull(stationName: String, filter: String): List<FatDeparture> {
+
+        val departures = getDeparturesFromHVV(stationName).getJSONArray("departures")
+
+        val list = departures
+            .map { gson.fromJson((it as JSONObject).toString(), FatDeparture::class.java) }
+            .filter {
+                filter in it.line.name.toLowerCase()
+                    || filter in it.line.direction.toLowerCase()
+                    || filter in it.line.type.longInfo.toLowerCase()
+                    || filter in it.line.type.shortInfo.toLowerCase()
+                    || filter in it.line.type.simpleType.toLowerCase()
+            }
+
+        println(list)
+
+        return list;
+    }
+
+    fun headers(data: String) = mapOf(
+        "geofox-auth-user" to "gordon",
+        "geofox-auth-signature" to data.sign(),
+        "content-type" to "application/json"
+    )
+
+    fun getDeparturesFromHVV(stationName: String): JSONObject {
+
         val stationJSON = findStation(stationName)
         if (stationJSON.getJSONArray("results").length() == 0) {
             println("no stations found by name $stationName")
-            return emptyList()
+            return JSONObject()
         }
         val station = stationJSON.getJSONArray("results").getJSONObject(0)
 
-        val (date, time) = now().format(
-            ofPattern("dd.MM.YYY HH:mm")).toString().split(" ", limit = 2)
+        val (date, time) = now().format(ofPattern("dd.MM.YYY HH:mm")).toString().split(" ", limit = 2)
 
         ////            |"time": {"date": "$date", "time": "$time"},
         //"date": "heute", "time": "jetzt"
@@ -67,73 +113,17 @@ class GeofoxClient {
             data = data
         )
 
-        if(!post.jsonObject.has("departures")){
-            println("Couldn't get departures:")
-            println("Request " + data)
-            println("Response " + post.statusCode + " " + post.text)
-        }
-        val departures = post.jsonObject.getJSONArray("departures")
 
-        val list = departures
-            .map { it as JSONObject }
-            .filter {
-                filter.toLowerCase() in it.getJSONObject("line").getString("name").toLowerCase()
-                    ||
-                    filter.toLowerCase() in it.getJSONObject("line").getString("direction").toLowerCase()
-            }
-            .map {
-                (it.getJSONObject("line").getString("name") + " " +
-                    it.getJSONObject("line").getString("direction")) to
-                    it.getInt("timeOffset")
-            }
-            .map { Departure(it.first, it.second) }
-
-        println(list)
-
-        return list;
-    }
-
-    fun getDepartures(arguments: String): List<Departure> {
-        val (name, serviceType) = arguments.split(" ", limit = 2)
-        return getDepartures(name, serviceType)
-    }
-
-    fun headers(data: String) = mapOf(
-        "geofox-auth-user" to "gordon",
-        "geofox-auth-signature" to data.sign(),
-        "content-type" to "application/json"
-    )
-
-    fun getDeparturesFull(stationName: String): String {
-        val stationJSON = findStation(stationName)
-        if (stationJSON.getJSONArray("results").length() == 0) {
-            println("no stations found by name $stationName")
-            return "no stations found by name $stationName"
-        }
-        val station = stationJSON.getJSONArray("results").getJSONObject(0)
-
-        val (date, time) = now().format(
-            ofPattern("dd.MM.YYY HH:mm")).toString().split(" ", limit = 2)
-
-        //"date": "heute", "time": "jetzt"
-        @Language("JSON") val data = """
-            |{
-            |"station": $station,
-            |"time": {"date": "$date", "time": "$time"},
-            |"maxList": 30,
-            |"maxTimeOffset": 1000,
-            |"useRealtime": true
-            |}""".trimMargin()
-        val post = post(
-            url = "http://api-test.geofox.de/gti/public/departureList",
-            headers = headers(data),
-            data = data
-        )
-        return post.jsonObject.toString(2)
+        return post.jsonObject;
     }
 
 }
+
 data class Departure(val direction: String, val timeInMinutes: Int)
+
+data class FatDeparture(val line: Line, val timeOffset: Int)
+data class Line(val name: String, val type: TrainType, val direction: String)
+data class TrainType(val simpleType: String, val shortInfo: String, val longInfo: String)
 
 fun String.sign(): String {
     val passwordEncoding = Charset.forName("UTF-8")
